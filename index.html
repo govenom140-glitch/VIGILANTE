@@ -44,13 +44,28 @@
         }
 
         /* --- UPDATED MESSAGE BOX FOR BOTTOM START --- */
-        #messages { 
-            flex-grow: 1; overflow-y: auto; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(10px); 
-            padding: 15px; margin: 10px 0; border: 1px solid rgba(255, 0, 0, 0.2); border-radius: 10px;
-            display: flex; flex-direction: column; 
-            justify-content: flex-end; /* මේකෙන් තමයි මැසේජ් පල්ලෙහාට තල්ලු කරන්නේ */
-            scroll-behavior: smooth;
-        }
+       #messages { 
+    flex-grow: 1; 
+    overflow-y: auto; 
+    background: rgba(0, 0, 0, 0.6); 
+    backdrop-filter: blur(10px); 
+    padding: 15px; 
+    margin: 10px 0; 
+    border: 1px solid rgba(255, 0, 0, 0.2); 
+    border-radius: 10px;
+    display: flex; 
+    flex-direction: column; 
+    /* මෙතැන වෙනස් කරන්න */
+    justify-content: flex-start; 
+    scroll-behavior: smooth;
+    /* ස්ක්‍රෝල් බාර් එක පෙනෙන පරිදි */
+    scrollbar-width: thin;
+    scrollbar-color: #ff0000 transparent;
+}
+
+/* ස්ක්‍රෝල් බාර් එක ලස්සන කිරීමට */
+#messages::-webkit-scrollbar { width: 6px; }
+#messages::-webkit-scrollbar-thumb { background-color: #ff0000; border-radius: 10px; }
         
         #msg-container {
             display: flex; flex-direction: column;
