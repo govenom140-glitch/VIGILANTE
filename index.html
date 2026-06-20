@@ -160,18 +160,62 @@
         document.getElementById('admin-pass-container').classList.toggle('hidden', !e.target.value.toUpperCase().startsWith("ADMIN_"));
     });
 
-    async function handleLogin() {
-        const name = document.getElementById('username').value.trim();
-        const pass = document.getElementById('adminPass').value;
-        if (!name) return;
-        if (name === "ADMIN_BIG MOUSE") {
-            if (pass === "venom2010") { currentUser = "ADMIN VENOM"; } 
-            else { alert("ACCESS DENIED"); return; }
-        } else { currentUser = name; }
-        document.getElementById('login-screen').classList.add('hidden');
-        document.getElementById('chat-box').classList.remove('hidden');
-        initChat();
+    // 1. handleLogin ශ්‍රිතය වෙනස් කරන්න
+async function handleLogin() {
+    const name = document.getElementById('username').value.trim();
+    const pass = document.getElementById('adminPass').value;
+    if (!name) return;
+
+    if (name === "ADMIN_BIG MOUSE") {
+        if (pass === "induwara2010") { // ඔබ ඉල්ලූ නව මුරපදය
+            currentUser = "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒"; // මෙතැන නම වෙනස් විය
+        } else {
+            alert("ACCESS DENIED");
+            return;
+        }
+    } else {
+        currentUser = name;
     }
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('chat-box').classList.remove('hidden');
+    initChat();
+}
+
+// 2. appendMessage ශ්‍රිතයේ වර්ණ ගැන්වීම
+function appendMessage(id, user, rawMsg, imgData) {
+    if (document.getElementById(`msg-${id}`)) return;
+    const msgContainer = document.getElementById('msg-container');
+    const div = document.createElement('div');
+    div.id = `msg-${id}`;
+    div.className = "msg";
+    
+    // මෙතැනදී නම '𝖒𝖗 𝖛𝖊𝖓𝖔𝖒' නම් වර්ණය කහ පැහැය ගනී
+    let displayColor = (user === "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒") ? "#ffd700" : "#ff4444";
+    
+    div.style.borderColor = displayColor;
+    div.style.color = displayColor;
+    
+    let cleanMsg = rawMsg;
+    let replyHtml = "";
+    if (rawMsg.startsWith(">>REPLY[")) {
+        const endIdx = rawMsg.indexOf("]<<");
+        if (endIdx > -1) {
+            const parts = rawMsg.substring(8, endIdx).split(":");
+            replyHtml = `<div class="quote-box">@${parts[0]}: ${parts[1]}</div>`;
+            cleanMsg = rawMsg.substring(endIdx + 4);
+        }
+    }
+    
+    div.innerHTML = `
+        ${replyHtml}
+        <div onclick="handleDelete(${id}, '${user}')">
+            <span style="font-weight:bold;">[${user}]</span> ${cleanMsg}
+        </div>
+        ${imgData ? `<img src="${imgData}" class="chat-img">` : ''}
+        <div class="reply-btn" onclick="setReply('${user}', '${cleanMsg.replace(/'/g, "\\'")}')" style="color: ${displayColor}">[REPLY]</div>
+    `;
+    msgContainer.appendChild(div);
+}
 
     function toggleMembers() {
         const list = document.getElementById('members-list-container');
