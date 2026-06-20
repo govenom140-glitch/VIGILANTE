@@ -164,7 +164,6 @@
         const pass = document.getElementById('adminPass').value;
         if (!name) return;
 
-        // සියලුම අකුරු Capital කර පරීක්ෂා කිරීම (Case Insensitive)
         const upperName = name.toUpperCase();
 
         if (upperName === "ADMIN_BIG MOUSE") {
@@ -213,11 +212,23 @@
     function updateMembersList(presenceState) {
         const listDiv = document.getElementById('members-list');
         listDiv.innerHTML = "";
-        Object.keys(presenceState).forEach(user => {
+        
+        let users = Object.keys(presenceState);
+        
+        // අකාරාදී පිළිවෙලට සකසන අතරතුර Admin ව ලැයිස්තුවේ ඉහළට ගෙන ඒමේ Sorting ක්‍රියාවලිය
+        users.sort((a, b) => {
+            let isAdminA = (a === "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒" || a.toUpperCase() === "ADMIN_BIG MOUSE" || a.toUpperCase() === "ADMIN VENOM");
+            let isAdminB = (b === "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒" || b.toUpperCase() === "ADMIN_BIG MOUSE" || b.toUpperCase() === "ADMIN VENOM");
+            
+            if (isAdminA && !isAdminB) return -1; // Admin 'A' නම් ඉහළට යයි
+            if (!isAdminA && isAdminB) return 1;  // Admin 'B' නම් ඉහළට යයි
+            return a.localeCompare(b);            // අනිත් යූසර්ලා අකාරාදී පිළිවෙලට යයි
+        });
+
+        users.forEach(user => {
             const div = document.createElement('div');
             div.className = "member-item";
             
-            // Admin කෙනෙක් නම් Active list එකේදීත් '𝖒𝖗 𝖛𝖊𝖓𝖔𝖒' විදියට කහ පාටින් පෙන්වන්න
             let isAdmin = (user === "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒" || user.toUpperCase() === "ADMIN_BIG MOUSE" || user.toUpperCase() === "ADMIN VENOM");
             let displayUser = isAdmin ? "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒" : user;
             let dotColor = isAdmin ? "#ffd700" : "#0f0";
@@ -282,7 +293,6 @@
         div.id = `msg-${id}`;
         div.className = "msg";
         
-        // Admin Messages සහ නම Yellow (Gold) කිරීමට අනිත් අයටත් පෙනෙන පරිදි Update කිරීම
         let isAdmin = (user === "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒" || user.toUpperCase() === "ADMIN_BIG MOUSE" || user.toUpperCase() === "ADMIN VENOM");
         let displayUser = isAdmin ? "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒" : user;
         let displayColor = isAdmin ? "#ffd700" : "#ff4444";
