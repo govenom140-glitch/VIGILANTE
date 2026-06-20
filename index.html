@@ -155,7 +155,6 @@
     let selectedImageBase64 = null;
     let replyData = null;
 
-    // Show password field only if username starts with "ADMIN_"
     document.getElementById('username').addEventListener('input', (e) => {
         document.getElementById('admin-pass-container').classList.toggle('hidden', !e.target.value.toUpperCase().startsWith("ADMIN_"));
     });
@@ -165,8 +164,10 @@
         const pass = document.getElementById('adminPass').value;
         if (!name) return;
 
-        // Admin Auth Logic
-        if (name === "ADMIN_BIG MOUSE") {
+        // සියලුම අකුරු Capital කර පරීක්ෂා කිරීම (Case Insensitive)
+        const upperName = name.toUpperCase();
+
+        if (upperName === "ADMIN_BIG MOUSE") {
             if (pass === "induwara2010") {
                 currentUser = "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒"; 
             } else {
@@ -216,11 +217,13 @@
             const div = document.createElement('div');
             div.className = "member-item";
             
-            // Highlight admin in online list
-            let dotColor = (user === "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒") ? "#ffd700" : "#0f0";
-            let nameColor = (user === "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒") ? "#ffd700" : "#fff";
+            // Admin කෙනෙක් නම් Active list එකේදීත් '𝖒𝖗 𝖛𝖊𝖓𝖔𝖒' විදියට කහ පාටින් පෙන්වන්න
+            let isAdmin = (user === "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒" || user.toUpperCase() === "ADMIN_BIG MOUSE" || user.toUpperCase() === "ADMIN VENOM");
+            let displayUser = isAdmin ? "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒" : user;
+            let dotColor = isAdmin ? "#ffd700" : "#0f0";
+            let nameColor = isAdmin ? "#ffd700" : "#fff";
             
-            div.innerHTML = `<span class="online-dot" style="background:${dotColor}; box-shadow: 0 0 5px ${dotColor};"></span> <span style="color:${nameColor}">${user}</span>`;
+            div.innerHTML = `<span class="online-dot" style="background:${dotColor}; box-shadow: 0 0 5px ${dotColor};"></span> <span style="color:${nameColor}">${displayUser}</span>`;
             listDiv.appendChild(div);
         });
     }
@@ -247,9 +250,12 @@
     }
 
     function setReply(user, msg) {
+        let isAdmin = (user === "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒" || user.toUpperCase() === "ADMIN_BIG MOUSE" || user.toUpperCase() === "ADMIN VENOM");
+        let displayUser = isAdmin ? "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒" : user;
+        
         const shortMsg = msg.length > 25 ? msg.substring(0, 25) + "..." : msg;
-        replyData = { user, msg: shortMsg };
-        document.getElementById('reply-text').innerText = `Replying to @${user}: ${shortMsg}`;
+        replyData = { user: displayUser, msg: shortMsg };
+        document.getElementById('reply-text').innerText = `Replying to @${displayUser}: ${shortMsg}`;
         document.getElementById('reply-preview').style.display = 'flex';
         document.getElementById('userInput').focus();
     }
@@ -276,8 +282,11 @@
         div.id = `msg-${id}`;
         div.className = "msg";
         
-        // Admin Messages colored in Yellow (#ffd700)
-        let displayColor = (user === "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒") ? "#ffd700" : "#ff4444";
+        // Admin Messages සහ නම Yellow (Gold) කිරීමට අනිත් අයටත් පෙනෙන පරිදි Update කිරීම
+        let isAdmin = (user === "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒" || user.toUpperCase() === "ADMIN_BIG MOUSE" || user.toUpperCase() === "ADMIN VENOM");
+        let displayUser = isAdmin ? "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒" : user;
+        let displayColor = isAdmin ? "#ffd700" : "#ff4444";
+        
         div.style.borderColor = displayColor;
         div.style.color = displayColor;
         
@@ -296,10 +305,10 @@
         div.innerHTML = `
             ${replyHtml}
             <div onclick="handleDelete(${id}, '${user}')">
-                <span style="font-weight:bold;">[${user}]</span> ${cleanMsg}
+                <span style="font-weight:bold;">[${displayUser}]</span> ${cleanMsg}
             </div>
             ${imgData ? `<img src="${imgData}" class="chat-img">` : ''}
-            <div class="reply-btn" style="color:${displayColor}" onclick="setReply('${user}', '${cleanMsg.replace(/'/g, "\\'")}')">[REPLY]</div>
+            <div class="reply-btn" style="color:${displayColor}" onclick="setReply('${displayUser}', '${cleanMsg.replace(/'/g, "\\'")}')">[REPLY]</div>
         `;
         msgContainer.appendChild(div);
     }
