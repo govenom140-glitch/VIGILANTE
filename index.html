@@ -43,27 +43,25 @@
             cursor: pointer; padding: 5px; border-radius: 5px; font-weight: bold; font-size: 14px;
         }
 
-        /* --- UPDATED MESSAGE BOX FOR BOTTOM START --- */
-      #messages { 
-    flex-grow: 1; 
-    overflow-y: auto; 
-    background: rgba(0, 0, 0, 0.6); 
-    backdrop-filter: blur(10px); 
-    padding: 15px; 
-    margin: 10px 0; 
-    border: 1px solid rgba(255, 0, 0, 0.2); 
-    border-radius: 10px;
-    display: flex; 
-    flex-direction: column-reverse; /* මෙතැන column වෙනුවට column-reverse කරන්න */
-    justify-content: flex-start; 
-    scroll-behavior: smooth;
-    scrollbar-width: thin;
-    scrollbar-color: #ff0000 transparent;
-}
+        #messages { 
+            flex-grow: 1; 
+            overflow-y: auto; 
+            background: rgba(0, 0, 0, 0.6); 
+            backdrop-filter: blur(10px); 
+            padding: 15px; 
+            margin: 10px 0; 
+            border: 1px solid rgba(255, 0, 0, 0.2); 
+            border-radius: 10px;
+            display: flex; 
+            flex-direction: column; 
+            justify-content: flex-start; 
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: #ff0000 transparent;
+        }
 
-/* ස්ක්‍රෝල් බාර් එක ලස්සන කිරීමට */
-#messages::-webkit-scrollbar { width: 6px; }
-#messages::-webkit-scrollbar-thumb { background-color: #ff0000; border-radius: 10px; }
+        #messages::-webkit-scrollbar { width: 6px; }
+        #messages::-webkit-scrollbar-thumb { background-color: #ff0000; border-radius: 10px; }
         
         #msg-container {
             display: flex; flex-direction: column;
@@ -129,7 +127,8 @@
         </div>
         
         <div id="messages">
-            <div id="msg-container"></div> </div>
+            <div id="msg-container"></div> 
+        </div>
         
         <div class="input-container">
             <div id="reply-preview">
@@ -156,6 +155,7 @@
     let selectedImageBase64 = null;
     let replyData = null;
 
+    // Show password field only if username starts with "ADMIN_"
     document.getElementById('username').addEventListener('input', (e) => {
         document.getElementById('admin-pass-container').classList.toggle('hidden', !e.target.value.toUpperCase().startsWith("ADMIN_"));
     });
@@ -165,6 +165,7 @@
         const pass = document.getElementById('adminPass').value;
         if (!name) return;
 
+        // Admin Auth Logic
         if (name === "ADMIN_BIG MOUSE") {
             if (pass === "induwara2010") {
                 currentUser = "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒"; 
@@ -175,6 +176,7 @@
         } else {
             currentUser = name;
         }
+
         document.getElementById('login-screen').classList.add('hidden');
         document.getElementById('chat-box').classList.remove('hidden');
         initChat();
@@ -194,12 +196,14 @@
 
     async function initChat() {
         await fetchMessages();
+        
         const channel = _supabase.channel('online-users', { config: { presence: { key: currentUser } } });
         channel.on('presence', { event: 'sync' }, () => { updateMembersList(channel.presenceState()); }).subscribe(async (status) => { if (status === 'SUBSCRIBED') await channel.track({ online_at: new Date().toISOString() }); });
 
         _supabase.channel('messages_channel').on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => {
             if (payload.eventType === 'INSERT') {
                 appendMessage(payload.new.id, payload.new.username, payload.new.msg, payload.new.image_data);
+                scrollToBottom();
             }
             if (payload.eventType === 'DELETE') document.getElementById(`msg-${payload.old.id}`)?.remove();
         }).subscribe();
@@ -211,9 +215,19 @@
         Object.keys(presenceState).forEach(user => {
             const div = document.createElement('div');
             div.className = "member-item";
-            div.innerHTML = `<span class="online-dot"></span> ${user}`;
+            
+            // Highlight admin in online list
+            let dotColor = (user === "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒") ? "#ffd700" : "#0f0";
+            let nameColor = (user === "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒") ? "#ffd700" : "#fff";
+            
+            div.innerHTML = `<span class="online-dot" style="background:${dotColor}; box-shadow: 0 0 5px ${dotColor};"></span> <span style="color:${nameColor}">${user}</span>`;
             listDiv.appendChild(div);
         });
+    }
+
+    function scrollToBottom() {
+        const msgDiv = document.getElementById('messages');
+        msgDiv.scrollTop = msgDiv.scrollHeight;
     }
 
     async function fetchMessages() {
@@ -221,6 +235,7 @@
         document.getElementById('msg-container').innerHTML = '';
         if (data) {
             data.forEach(m => appendMessage(m.id, m.username, m.msg, m.image_data));
+            scrollToBottom();
         }
     }
 
@@ -261,18 +276,19 @@
         div.id = `msg-${id}`;
         div.className = "msg";
         
-        // ඇඩ්මින් සඳහා වර්ණය කහ පැහැයට (Gold) වෙනස් කිරීම
+        // Admin Messages colored in Yellow (#ffd700)
         let displayColor = (user === "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒") ? "#ffd700" : "#ff4444";
         div.style.borderColor = displayColor;
         div.style.color = displayColor;
-
+        
         let cleanMsg = rawMsg;
         let replyHtml = "";
+        
         if (rawMsg.startsWith(">>REPLY[")) {
             const endIdx = rawMsg.indexOf("]<<");
             if (endIdx > -1) {
                 const parts = rawMsg.substring(8, endIdx).split(":");
-                replyHtml = `<div class="quote-box" style="color: ${displayColor}">@${parts[0]}: ${parts[1]}</div>`;
+                replyHtml = `<div class="quote-box" style="border-color: ${displayColor}; color: #fff;">@${parts[0]}: ${parts[1]}</div>`;
                 cleanMsg = rawMsg.substring(endIdx + 4);
             }
         }
@@ -283,7 +299,7 @@
                 <span style="font-weight:bold;">[${user}]</span> ${cleanMsg}
             </div>
             ${imgData ? `<img src="${imgData}" class="chat-img">` : ''}
-            <div class="reply-btn" onclick="setReply('${user}', '${cleanMsg.replace(/'/g, "\\'")}')" style="color: ${displayColor}">[REPLY]</div>
+            <div class="reply-btn" style="color:${displayColor}" onclick="setReply('${user}', '${cleanMsg.replace(/'/g, "\\'")}')">[REPLY]</div>
         `;
         msgContainer.appendChild(div);
     }
@@ -293,6 +309,7 @@
             if(confirm("Destroy this intel?")) _supabase.from('messages').delete().eq('id', id); 
         }
     }
+    
     document.getElementById("userInput").addEventListener("keypress", (e) => { if (e.key === "Enter") sendMessage(); });
 </script>
 </body>
