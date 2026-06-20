@@ -160,62 +160,25 @@
         document.getElementById('admin-pass-container').classList.toggle('hidden', !e.target.value.toUpperCase().startsWith("ADMIN_"));
     });
 
-    // 1. handleLogin ශ්‍රිතය වෙනස් කරන්න
-async function handleLogin() {
-    const name = document.getElementById('username').value.trim();
-    const pass = document.getElementById('adminPass').value;
-    if (!name) return;
+    async function handleLogin() {
+        const name = document.getElementById('username').value.trim();
+        const pass = document.getElementById('adminPass').value;
+        if (!name) return;
 
-    if (name === "ADMIN_BIG MOUSE") {
-        if (pass === "induwara2010") { // ඔබ ඉල්ලූ නව මුරපදය
-            currentUser = "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒"; // මෙතැන නම වෙනස් විය
+        if (name === "ADMIN_BIG MOUSE") {
+            if (pass === "induwara2010") {
+                currentUser = "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒"; 
+            } else {
+                alert("ACCESS DENIED");
+                return;
+            }
         } else {
-            alert("ACCESS DENIED");
-            return;
+            currentUser = name;
         }
-    } else {
-        currentUser = name;
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('chat-box').classList.remove('hidden');
+        initChat();
     }
-    document.getElementById('login-screen').classList.add('hidden');
-    document.getElementById('chat-box').classList.remove('hidden');
-    initChat();
-}
-
-// 2. appendMessage ශ්‍රිතයේ වර්ණ ගැන්වීම
-function appendMessage(id, user, rawMsg, imgData) {
-    if (document.getElementById(`msg-${id}`)) return;
-    const msgContainer = document.getElementById('msg-container');
-    const div = document.createElement('div');
-    div.id = `msg-${id}`;
-    div.className = "msg";
-    
-    // මෙතැනදී නම '𝖒𝖗 𝖛𝖊𝖓𝖔𝖒' නම් වර්ණය කහ පැහැය ගනී
-    let displayColor = (user === "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒") ? "#ffd700" : "#ff4444";
-    
-    div.style.borderColor = displayColor;
-    div.style.color = displayColor;
-    
-    let cleanMsg = rawMsg;
-    let replyHtml = "";
-    if (rawMsg.startsWith(">>REPLY[")) {
-        const endIdx = rawMsg.indexOf("]<<");
-        if (endIdx > -1) {
-            const parts = rawMsg.substring(8, endIdx).split(":");
-            replyHtml = `<div class="quote-box">@${parts[0]}: ${parts[1]}</div>`;
-            cleanMsg = rawMsg.substring(endIdx + 4);
-        }
-    }
-    
-    div.innerHTML = `
-        ${replyHtml}
-        <div onclick="handleDelete(${id}, '${user}')">
-            <span style="font-weight:bold;">[${user}]</span> ${cleanMsg}
-        </div>
-        ${imgData ? `<img src="${imgData}" class="chat-img">` : ''}
-        <div class="reply-btn" onclick="setReply('${user}', '${cleanMsg.replace(/'/g, "\\'")}')" style="color: ${displayColor}">[REPLY]</div>
-    `;
-    msgContainer.appendChild(div);
-}
 
     function toggleMembers() {
         const list = document.getElementById('members-list-container');
@@ -231,14 +194,12 @@ function appendMessage(id, user, rawMsg, imgData) {
 
     async function initChat() {
         await fetchMessages();
-        
         const channel = _supabase.channel('online-users', { config: { presence: { key: currentUser } } });
         channel.on('presence', { event: 'sync' }, () => { updateMembersList(channel.presenceState()); }).subscribe(async (status) => { if (status === 'SUBSCRIBED') await channel.track({ online_at: new Date().toISOString() }); });
 
         _supabase.channel('messages_channel').on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => {
             if (payload.eventType === 'INSERT') {
                 appendMessage(payload.new.id, payload.new.username, payload.new.msg, payload.new.image_data);
-                scrollToBottom();
             }
             if (payload.eventType === 'DELETE') document.getElementById(`msg-${payload.old.id}`)?.remove();
         }).subscribe();
@@ -255,17 +216,11 @@ function appendMessage(id, user, rawMsg, imgData) {
         });
     }
 
-    function scrollToBottom() {
-        const msgDiv = document.getElementById('messages');
-        msgDiv.scrollTop = msgDiv.scrollHeight;
-    }
-
     async function fetchMessages() {
         const { data } = await _supabase.from('messages').select('*').order('id', { ascending: true });
         document.getElementById('msg-container').innerHTML = '';
         if (data) {
             data.forEach(m => appendMessage(m.id, m.username, m.msg, m.image_data));
-            scrollToBottom();
         }
     }
 
@@ -305,32 +260,36 @@ function appendMessage(id, user, rawMsg, imgData) {
         const div = document.createElement('div');
         div.id = `msg-${id}`;
         div.className = "msg";
-        let displayColor = (user === "ADMIN VENOM") ? "#ffd700" : "#ff4444";
+        
+        // ඇඩ්මින් සඳහා වර්ණය කහ පැහැයට (Gold) වෙනස් කිරීම
+        let displayColor = (user === "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒") ? "#ffd700" : "#ff4444";
         div.style.borderColor = displayColor;
         div.style.color = displayColor;
+
         let cleanMsg = rawMsg;
         let replyHtml = "";
         if (rawMsg.startsWith(">>REPLY[")) {
             const endIdx = rawMsg.indexOf("]<<");
             if (endIdx > -1) {
                 const parts = rawMsg.substring(8, endIdx).split(":");
-                replyHtml = `<div class="quote-box">@${parts[0]}: ${parts[1]}</div>`;
+                replyHtml = `<div class="quote-box" style="color: ${displayColor}">@${parts[0]}: ${parts[1]}</div>`;
                 cleanMsg = rawMsg.substring(endIdx + 4);
             }
         }
+        
         div.innerHTML = `
             ${replyHtml}
             <div onclick="handleDelete(${id}, '${user}')">
                 <span style="font-weight:bold;">[${user}]</span> ${cleanMsg}
             </div>
             ${imgData ? `<img src="${imgData}" class="chat-img">` : ''}
-            <div class="reply-btn" onclick="setReply('${user}', '${cleanMsg.replace(/'/g, "\\'")}')">[REPLY]</div>
+            <div class="reply-btn" onclick="setReply('${user}', '${cleanMsg.replace(/'/g, "\\'")}')" style="color: ${displayColor}">[REPLY]</div>
         `;
         msgContainer.appendChild(div);
     }
 
     function handleDelete(id, user) {
-        if (currentUser === "ADMIN VENOM" || user === currentUser) { 
+        if (currentUser === "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒" || user === currentUser) { 
             if(confirm("Destroy this intel?")) _supabase.from('messages').delete().eq('id', id); 
         }
     }
