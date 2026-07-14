@@ -120,8 +120,27 @@
             border-left: 3px solid; 
             background: rgba(0, 0, 0, 0.5); 
             position: relative; 
-            max-width: 100%;
+            max-width: 85%;
         }
+
+        /* ===== LEFT SIDE (OTHER USERS) ===== */
+        .msg-left {
+            align-self: flex-start;
+            border-radius: 0 8px 8px 8px;
+            border-left: 3px solid;
+            border-right: none;
+            text-align: left;
+        }
+
+        /* ===== RIGHT SIDE (CURRENT USER) ===== */
+        .msg-right {
+            align-self: flex-end;
+            border-radius: 8px 0 8px 8px;
+            border-right: 3px solid;
+            border-left: none;
+            text-align: left;
+        }
+
         .reply-btn { font-size: 10px; cursor: pointer; color: #888; margin-top: 5px; display: inline-block; text-decoration: underline; }
         .quote-box { background: rgba(255, 255, 255, 0.1); border-left: 2px solid #555; padding: 5px 8px; margin-bottom: 5px; font-size: 12px; opacity: 0.8; font-style: italic; border-radius: 3px; }
 
@@ -256,7 +275,7 @@
             .member-item { font-size: 10px; }
             #toggle-members { padding: 4px; font-size: 12px; }
             #messages { padding: 10px; margin: 5px 0; border-radius: 8px; }
-            .msg { font-size: 13px; padding: 6px 10px; margin-bottom: 10px; }
+            .msg { font-size: 13px; padding: 6px 10px; margin-bottom: 10px; max-width: 90%; }
             .quote-box { font-size: 11px; padding: 4px 6px; }
             .reply-btn { font-size: 9px; }
             .input-container { padding: 3px; margin-bottom: 3px; }
@@ -274,7 +293,7 @@
             #header { font-size: clamp(14px, 4.5vw, 20px); letter-spacing: 1px; }
             .header-logo { width: 28px; height: 28px; }
             #creator-tag { font-size: 8px; }
-            .msg { font-size: 12px; padding: 5px 8px; }
+            .msg { font-size: 12px; padding: 5px 8px; max-width: 92%; }
             .controls { height: 40px; }
             button#sendBtn { padding: 5px 10px; font-size: 12px; }
             input[type="text"] { font-size: 13px; }
@@ -513,6 +532,15 @@
         let isAdmin = (user === "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒" || user.toUpperCase() === "ADMIN_BIG MOUSE" || user.toUpperCase() === "ADMIN VENOM");
         let displayUser = isAdmin ? "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒" : user;
         let displayColor = isAdmin ? "#ffd700" : "#ff4444";
+
+        // ===== CHECK IF THIS IS CURRENT USER'S MESSAGE =====
+        let isOwnMessage = (user === currentUser || (user === "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒" && currentUser === "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒"));
+
+        if (isOwnMessage) {
+            div.classList.add('msg-right');
+        } else {
+            div.classList.add('msg-left');
+        }
 
         div.style.borderColor = displayColor;
         div.style.color = displayColor;
