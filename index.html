@@ -1,47 +1,22 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { box-sizing: border-box; }
-        html, body { 
-            background-color: #000; 
-            color: #ff4444; 
-            font-family: 'Courier New', monospace; 
-            margin: 0; 
-            padding: 0; 
-            overflow: hidden; 
-            height: 100vh; 
-            height: 100dvh;
-            width: 100vw; 
-        }
-
+        html, body { background-color: #000; color: #ff4444; font-family: 'Courier New', monospace; margin: 0; padding: 0; overflow: hidden; height: 100vh; width: 100vw; }
+        
         #terminal { 
-            width: 100vw; 
-            height: 100vh;
-            height: 100dvh;
-            display: flex; 
-            flex-direction: column; 
+            width: 100vw; height: 100vh; display: flex; flex-direction: column; 
             background-image: url('https://i.pinimg.com/736x/97/d1/98/97d198f2de3a40b28e8f9bb58c4ad1ca.jpg');
-            background-size: cover; 
-            background-position: center; 
-            background-repeat: no-repeat; 
-            padding: 10px; 
+            background-size: cover; background-position: center; background-repeat: no-repeat; padding: 10px; 
             position: relative;
         }
-
+        
         #header-container { 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            padding: 10px 15px; 
-            background: rgba(0, 0, 0, 0.7); 
-            backdrop-filter: blur(8px); 
-            border: 1px solid rgba(255, 0, 0, 0.2); 
-            border-radius: 8px;
-            flex-shrink: 0;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 15px; 
+            background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px); border: 1px solid rgba(255, 0, 0, 0.2); border-radius: 8px;
         }
         .header-main { display: flex; align-items: center; justify-content: space-between; width: 100%; }
         .header-logo { width: 45px; height: 45px; object-fit: contain; }
@@ -49,39 +24,23 @@
         #creator-tag { font-size: 10px; color: #ff0000; letter-spacing: 1px; margin-top: -5px; opacity: 0.8; font-weight: normal; }
 
         #online-panel {
-            position: absolute; 
-            top: 80px; 
-            right: 10px; 
-            z-index: 10;
-            display: flex; 
-            align-items: flex-start; 
-            gap: 5px;
+            position: absolute; top: 80px; right: 10px; z-index: 10;
+            display: flex; align-items: flex-start; gap: 5px;
         }
         #members-list-container {
-            width: 150px; 
-            max-height: 200px; 
-            overflow-y: auto;
-            background: rgba(255, 0, 0, 0.1); 
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 0, 0, 0.3); 
-            border-radius: 10px;
-            padding: 10px; 
-            display: none;
+            width: 150px; max-height: 200px; overflow-y: auto;
+            background: rgba(255, 0, 0, 0.1); backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 0, 0, 0.3); border-radius: 10px;
+            padding: 10px; display: none;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
         #members-list-container h4 { margin: 0 0 8px 0; font-size: 12px; text-transform: uppercase; border-bottom: 1px solid rgba(255,0,0,0.3); padding-bottom: 3px; }
         .member-item { font-size: 11px; margin-bottom: 4px; color: #fff; display: flex; align-items: center; gap: 5px; }
         .online-dot { width: 6px; height: 6px; background: #0f0; border-radius: 50%; box-shadow: 0 0 5px #0f0; }
-
+        
         #toggle-members {
-            background: rgba(255, 0, 0, 0.2); 
-            border: 1px solid #ff0000; 
-            color: #ff0000;
-            cursor: pointer; 
-            padding: 5px; 
-            border-radius: 5px; 
-            font-weight: bold; 
-            font-size: 14px;
+            background: rgba(255, 0, 0, 0.2); border: 1px solid #ff0000; color: #ff0000;
+            cursor: pointer; padding: 5px; border-radius: 5px; font-weight: bold; font-size: 14px;
         }
 
         #messages { 
@@ -99,217 +58,41 @@
             scroll-behavior: smooth;
             scrollbar-width: thin;
             scrollbar-color: #ff0000 transparent;
-            min-height: 0;
         }
 
         #messages::-webkit-scrollbar { width: 6px; }
         #messages::-webkit-scrollbar-thumb { background-color: #ff0000; border-radius: 10px; }
-
+        
         #msg-container {
-            display: flex; 
-            flex-direction: column;
+            display: flex; flex-direction: column;
             width: 100%;
         }
 
-        .msg { 
-            margin-bottom: 12px; 
-            padding: 8px 12px; 
-            font-size: 14px; 
-            word-wrap: break-word; 
-            border-radius: 0 5px 5px 0; 
-            border-left: 3px solid; 
-            background: rgba(0, 0, 0, 0.5); 
-            position: relative; 
-            max-width: 85%;
-        }
-
-        /* ===== LEFT SIDE (OTHER USERS) ===== */
-        .msg-left {
-            align-self: flex-start;
-            border-radius: 0 8px 8px 8px;
-            border-left: 3px solid;
-            border-right: none;
-            text-align: left;
-        }
-
-        /* ===== RIGHT SIDE (CURRENT USER) ===== */
-        .msg-right {
-            align-self: flex-end;
-            border-radius: 8px 0 8px 8px;
-            border-right: 3px solid;
-            border-left: none;
-            text-align: left;
-        }
-
+        .msg { margin-bottom: 12px; padding: 8px 12px; font-size: 14px; word-wrap: break-word; border-radius: 0 5px 5px 0; border-left: 3px solid; background: rgba(0, 0, 0, 0.5); position: relative; }
         .reply-btn { font-size: 10px; cursor: pointer; color: #888; margin-top: 5px; display: inline-block; text-decoration: underline; }
         .quote-box { background: rgba(255, 255, 255, 0.1); border-left: 2px solid #555; padding: 5px 8px; margin-bottom: 5px; font-size: 12px; opacity: 0.8; font-style: italic; border-radius: 3px; }
 
-        #reply-preview { 
-            display: none; 
-            background: rgba(255, 0, 0, 0.2); 
-            padding: 5px 12px; 
-            font-size: 12px; 
-            border: 1px solid #ff0000; 
-            border-bottom: none; 
-            border-radius: 10px 10px 0 0; 
-            width: calc(100% - 20px); 
-            margin: 0 auto; 
-            justify-content: space-between; 
-            align-items: center; 
-            backdrop-filter: blur(10px); 
-        }
+        #reply-preview { display: none; background: rgba(255, 0, 0, 0.2); padding: 5px 12px; font-size: 12px; border: 1px solid #ff0000; border-bottom: none; border-radius: 10px 10px 0 0; width: calc(100% - 20px); margin: 0 auto; justify-content: space-between; align-items: center; backdrop-filter: blur(10px); }
         .cancel-reply { cursor: pointer; color: #fff; font-weight: bold; font-size: 16px; margin-left: 10px; }
 
-        .input-container { 
-            padding: 5px; 
-            margin-bottom: 5px; 
-            flex-shrink: 0;
-        }
+        .input-container { padding: 5px; margin-bottom: 5px; }
         .controls { 
-            display: flex; 
-            align-items: center; 
-            gap: 10px; 
-            width: 100%; 
-            background: rgba(0, 0, 0, 0.85); 
-            border: 1px solid #ff0000; 
-            border-radius: 15px; 
-            padding: 5px 10px; 
-            height: 50px;
+            display: flex; align-items: center; gap: 10px; width: 100%; 
+            background: rgba(0, 0, 0, 0.85); border: 1px solid #ff0000; 
+            border-radius: 15px; padding: 5px 10px; height: 50px;
         }
-        input[type="text"] { 
-            background: transparent; 
-            border: none; 
-            color: #ff0000; 
-            padding: 0 5px; 
-            font-size: 16px; 
-            outline: none; 
-            flex-grow: 1; 
-            font-family: inherit; 
-            min-width: 0;
-        }
-        button#sendBtn { 
-            background: #ff0000; 
-            color: #000; 
-            border: none; 
-            padding: 8px 15px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            border-radius: 10px; 
-            height: 35px; 
-            flex-shrink: 0;
-            white-space: nowrap;
-        }
-        .upload-btn { 
-            background: transparent; 
-            color: #ff0000; 
-            border: 1px solid #ff0000; 
-            width: 32px; 
-            height: 32px; 
-            font-size: 20px; 
-            cursor: pointer; 
-            border-radius: 8px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            flex-shrink: 0;
-        }
+        input[type="text"] { background: transparent; border: none; color: #ff0000; padding: 0 5px; font-size: 16px; outline: none; flex-grow: 1; font-family: inherit; }
+        button#sendBtn { background: #ff0000; color: #000; border: none; padding: 8px 15px; cursor: pointer; font-weight: bold; border-radius: 10px; height: 35px; }
+        .upload-btn { background: transparent; color: #ff0000; border: 1px solid #ff0000; width: 32px; height: 32px; font-size: 20px; cursor: pointer; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
 
-        #login-screen { 
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100vw; 
-            height: 100vh;
-            height: 100dvh; 
-            background-image: url('https://i.pinimg.com/736x/97/d1/98/97d198f2de3a40b28e8f9bb58c4ad1ca.jpg'); 
-            background-size: 450px; 
-            background-position: center; 
-            background-repeat: no-repeat; 
-            background-color: #000; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            z-index: 100; 
-        }
-        #login-content { 
-            background-color: rgba(0, 0, 0, 0.4); 
-            padding: 30px; 
-            border-radius: 15px; 
-            border: 1px solid rgba(255, 0, 0, 0.5); 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            width: 90%; 
-            max-width: 350px; 
-            backdrop-filter: blur(20px); 
-            box-shadow: 0 0 30px rgba(0,0,0,0.5); 
-        }
-        #login-screen input { 
-            width: 100%; 
-            text-align: center; 
-            margin-bottom: 20px; 
-            background: rgba(0, 0, 0, 0.6); 
-            border: 1px solid #ff0000; 
-            color: #ff0000; 
-            padding: 12px; 
-            border-radius: 5px; 
-            outline: none; 
-        }
-
+        #login-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-image: url('https://i.pinimg.com/736x/97/d1/98/97d198f2de3a40b28e8f9bb58c4ad1ca.jpg'); background-size: 450px; background-position: center; background-repeat: no-repeat; background-color: #000; display: flex; justify-content: center; align-items: center; z-index: 100; }
+        #login-content { background-color: rgba(0, 0, 0, 0.4); padding: 30px; border-radius: 15px; border: 1px solid rgba(255, 0, 0, 0.5); display: flex; flex-direction: column; align-items: center; width: 90%; max-width: 350px; backdrop-filter: blur(20px); box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+        #login-screen input { width: 100%; text-align: center; margin-bottom: 20px; background: rgba(0, 0, 0, 0.6); border: 1px solid #ff0000; color: #ff0000; padding: 12px; border-radius: 5px; outline: none; }
+        
         .hidden { display: none !important; }
         .chat-img { max-width: 100%; border-radius: 4px; margin-top: 8px; }
         #preview-container { display: none; padding: 5px; font-size: 11px; color: #ff0; text-align: center; }
-
-        /* ========================
-           MOBILE RESPONSIVE STYLES
-           ======================== */
-        @media screen and (max-width: 768px) {
-            #terminal { padding: 5px; }
-            #header-container { padding: 6px 10px; border-radius: 6px; }
-            .header-logo { width: 32px; height: 32px; }
-            #header { font-size: clamp(16px, 5vw, 24px); letter-spacing: 2px; }
-            #creator-tag { font-size: 9px; margin-top: -3px; }
-            #online-panel { top: 65px; right: 5px; }
-            #members-list-container { width: 130px; max-height: 160px; padding: 8px; border-radius: 8px; }
-            #members-list-container h4 { font-size: 10px; }
-            .member-item { font-size: 10px; }
-            #toggle-members { padding: 4px; font-size: 12px; }
-            #messages { padding: 10px; margin: 5px 0; border-radius: 8px; }
-            .msg { font-size: 13px; padding: 6px 10px; margin-bottom: 10px; max-width: 90%; }
-            .quote-box { font-size: 11px; padding: 4px 6px; }
-            .reply-btn { font-size: 9px; }
-            .input-container { padding: 3px; margin-bottom: 3px; }
-            .controls { height: 44px; padding: 4px 8px; gap: 6px; border-radius: 12px; }
-            input[type="text"] { font-size: 14px; }
-            button#sendBtn { padding: 6px 12px; height: 32px; font-size: 13px; }
-            .upload-btn { width: 28px; height: 28px; font-size: 18px; }
-            #reply-preview { font-size: 11px; padding: 4px 10px; width: calc(100% - 10px); }
-            #preview-container { font-size: 10px; padding: 3px; }
-            #login-content { padding: 20px; width: 92%; }
-            #login-screen input { padding: 10px; margin-bottom: 15px; }
-        }
-
-        @media screen and (max-width: 480px) {
-            #header { font-size: clamp(14px, 4.5vw, 20px); letter-spacing: 1px; }
-            .header-logo { width: 28px; height: 28px; }
-            #creator-tag { font-size: 8px; }
-            .msg { font-size: 12px; padding: 5px 8px; max-width: 92%; }
-            .controls { height: 40px; }
-            button#sendBtn { padding: 5px 10px; font-size: 12px; }
-            input[type="text"] { font-size: 13px; }
-        }
-
-        @media screen and (max-height: 500px) and (orientation: landscape) {
-            #header-container { padding: 4px 10px; }
-            .header-logo { width: 28px; height: 28px; }
-            #header { font-size: 18px; }
-            #messages { margin: 3px 0; padding: 8px; }
-            .msg { margin-bottom: 6px; padding: 5px 8px; font-size: 12px; }
-            .controls { height: 38px; }
-            #online-panel { top: 55px; }
-        }
     </style>
-<base target="_blank">
 </head>
 <body>
 
@@ -342,11 +125,11 @@
             </div>
             <button id="toggle-members" onclick="toggleMembers()">◀</button>
         </div>
-
+        
         <div id="messages">
             <div id="msg-container"></div> 
         </div>
-
+        
         <div class="input-container">
             <div id="reply-preview">
                 <span id="reply-text" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
@@ -371,26 +154,6 @@
     let currentUser = "";
     let selectedImageBase64 = null;
     let replyData = null;
-
-    // ===== ENTER KEY SUPPORT FOR LOGIN =====
-    document.getElementById('username').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            const adminPassContainer = document.getElementById('admin-pass-container');
-            if (!adminPassContainer.classList.contains('hidden')) {
-                document.getElementById('adminPass').focus();
-            } else {
-                handleLogin();
-            }
-        }
-    });
-
-    document.getElementById('adminPass').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            handleLogin();
-        }
-    });
 
     document.getElementById('username').addEventListener('input', (e) => {
         document.getElementById('admin-pass-container').classList.toggle('hidden', !e.target.value.toUpperCase().startsWith("ADMIN_"));
@@ -433,7 +196,7 @@
 
     async function initChat() {
         await fetchMessages();
-
+        
         const channel = _supabase.channel('online-users', { config: { presence: { key: currentUser } } });
         channel.on('presence', { event: 'sync' }, () => { updateMembersList(channel.presenceState()); }).subscribe(async (status) => { if (status === 'SUBSCRIBED') await channel.track({ online_at: new Date().toISOString() }); });
 
@@ -449,27 +212,28 @@
     function updateMembersList(presenceState) {
         const listDiv = document.getElementById('members-list');
         listDiv.innerHTML = "";
-
+        
         let users = Object.keys(presenceState);
-
+        
+        // අකාරාදී පිළිවෙලට සකසන අතරතුර Admin ව ලැයිස්තුවේ ඉහළට ගෙන ඒමේ Sorting ක්‍රියාවලිය
         users.sort((a, b) => {
             let isAdminA = (a === "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒" || a.toUpperCase() === "ADMIN_BIG MOUSE" || a.toUpperCase() === "ADMIN VENOM");
             let isAdminB = (b === "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒" || b.toUpperCase() === "ADMIN_BIG MOUSE" || b.toUpperCase() === "ADMIN VENOM");
-
-            if (isAdminA && !isAdminB) return -1;
-            if (!isAdminA && isAdminB) return 1;
-            return a.localeCompare(b);
+            
+            if (isAdminA && !isAdminB) return -1; // Admin 'A' නම් ඉහළට යයි
+            if (!isAdminA && isAdminB) return 1;  // Admin 'B' නම් ඉහළට යයි
+            return a.localeCompare(b);            // අනිත් යූසර්ලා අකාරාදී පිළිවෙලට යයි
         });
 
         users.forEach(user => {
             const div = document.createElement('div');
             div.className = "member-item";
-
+            
             let isAdmin = (user === "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒" || user.toUpperCase() === "ADMIN_BIG MOUSE" || user.toUpperCase() === "ADMIN VENOM");
             let displayUser = isAdmin ? "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒" : user;
             let dotColor = isAdmin ? "#ffd700" : "#0f0";
             let nameColor = isAdmin ? "#ffd700" : "#fff";
-
+            
             div.innerHTML = `<span class="online-dot" style="background:${dotColor}; box-shadow: 0 0 5px ${dotColor};"></span> <span style="color:${nameColor}">${displayUser}</span>`;
             listDiv.appendChild(div);
         });
@@ -499,7 +263,7 @@
     function setReply(user, msg) {
         let isAdmin = (user === "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒" || user.toUpperCase() === "ADMIN_BIG MOUSE" || user.toUpperCase() === "ADMIN VENOM");
         let displayUser = isAdmin ? "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒" : user;
-
+        
         const shortMsg = msg.length > 25 ? msg.substring(0, 25) + "..." : msg;
         replyData = { user: displayUser, msg: shortMsg };
         document.getElementById('reply-text').innerText = `Replying to @${displayUser}: ${shortMsg}`;
@@ -528,26 +292,17 @@
         const div = document.createElement('div');
         div.id = `msg-${id}`;
         div.className = "msg";
-
+        
         let isAdmin = (user === "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒" || user.toUpperCase() === "ADMIN_BIG MOUSE" || user.toUpperCase() === "ADMIN VENOM");
         let displayUser = isAdmin ? "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒" : user;
         let displayColor = isAdmin ? "#ffd700" : "#ff4444";
-
-        // ===== CHECK IF THIS IS CURRENT USER'S MESSAGE =====
-        let isOwnMessage = (user === currentUser || (user === "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒" && currentUser === "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒"));
-
-        if (isOwnMessage) {
-            div.classList.add('msg-right');
-        } else {
-            div.classList.add('msg-left');
-        }
-
+        
         div.style.borderColor = displayColor;
         div.style.color = displayColor;
-
+        
         let cleanMsg = rawMsg;
         let replyHtml = "";
-
+        
         if (rawMsg.startsWith(">>REPLY[")) {
             const endIdx = rawMsg.indexOf("]<<");
             if (endIdx > -1) {
@@ -556,14 +311,14 @@
                 cleanMsg = rawMsg.substring(endIdx + 4);
             }
         }
-
+        
         div.innerHTML = `
             ${replyHtml}
             <div onclick="handleDelete(${id}, '${user}')">
                 <span style="font-weight:bold;">[${displayUser}]</span> ${cleanMsg}
             </div>
             ${imgData ? `<img src="${imgData}" class="chat-img">` : ''}
-            <div class="reply-btn" style="color:${displayColor}" onclick="setReply('${displayUser}', '${cleanMsg.replace(/'/g, "\'")}')">[REPLY]</div>
+            <div class="reply-btn" style="color:${displayColor}" onclick="setReply('${displayUser}', '${cleanMsg.replace(/'/g, "\\'")}')">[REPLY]</div>
         `;
         msgContainer.appendChild(div);
     }
@@ -573,14 +328,8 @@
             if(confirm("Destroy this intel?")) _supabase.from('messages').delete().eq('id', id); 
         }
     }
-
-    // ===== ENTER KEY SUPPORT FOR MESSAGE SEND =====
-    document.getElementById("userInput").addEventListener("keypress", (e) => { 
-        if (e.key === "Enter") {
-            e.preventDefault();
-            sendMessage(); 
-        }
-    });
+    
+    document.getElementById("userInput").addEventListener("keypress", (e) => { if (e.key === "Enter") sendMessage(); });
 </script>
 </body>
 </html>
