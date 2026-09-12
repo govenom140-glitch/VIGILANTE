@@ -1,20 +1,22 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { box-sizing: border-box; }
-        html, body { background-color: #000; color: #ff4444; font-family: 'Courier New', monospace; margin: 0; padding: 0; overflow: hidden; height: 100vh; width: 100vw; }
+        html, body { background-color: #000; color: #ff4444; font-family: 'Courier New', monospace; margin: 0; padding: 0; overflow: hidden; height: 100%; width: 100vw; }
         
         #terminal { 
-            width: 100vw; height: 100vh; display: flex; flex-direction: column; 
+            width: 100vw; height: 100vh; height: 100dvh; /* ✅ mobile browser bar fix */
+            display: flex; flex-direction: column; 
             background-image: url('https://i.pinimg.com/736x/97/d1/98/97d198f2de3a40b28e8f9bb58c4ad1ca.jpg');
             background-size: cover; background-position: center; background-repeat: no-repeat; padding: 10px; 
             position: relative;
         }
         
         #header-container { 
+            flex-shrink: 0; /* ✅ header eka compress wenna danna epa */
             display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 15px; 
             background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px); border: 1px solid rgba(255, 0, 0, 0.2); border-radius: 8px;
         }
@@ -44,7 +46,8 @@
         }
 
         #messages { 
-            flex-grow: 1; 
+            flex: 1 1 auto; /* ✅ messages area eka shrink wenna denna */
+            min-height: 0; /* ✅ scroll wenna wadakatama important */
             overflow-y: auto; 
             background: rgba(0, 0, 0, 0.6); 
             backdrop-filter: blur(10px); 
@@ -58,6 +61,8 @@
             scroll-behavior: smooth;
             scrollbar-width: thin;
             scrollbar-color: #ff0000 transparent;
+            overscroll-behavior: contain; /* ✅ mobile scroll chaining stop */
+            -webkit-overflow-scrolling: touch;
         }
 
         #messages::-webkit-scrollbar { width: 6px; }
@@ -75,17 +80,21 @@
         #reply-preview { display: none; background: rgba(255, 0, 0, 0.2); padding: 5px 12px; font-size: 12px; border: 1px solid #ff0000; border-bottom: none; border-radius: 10px 10px 0 0; width: calc(100% - 20px); margin: 0 auto; justify-content: space-between; align-items: center; backdrop-filter: blur(10px); }
         .cancel-reply { cursor: pointer; color: #fff; font-weight: bold; font-size: 16px; margin-left: 10px; }
 
-        .input-container { padding: 5px; margin-bottom: 5px; }
+        .input-container { 
+            flex-shrink: 0; /* ✅ input bar eka screen ekata idan yanna danna epa */
+            padding: 5px; 
+            padding-bottom: calc(5px + env(safe-area-inset-bottom, 0px)); /* ✅ gesture bar phones walata */
+        }
         .controls { 
             display: flex; align-items: center; gap: 10px; width: 100%; 
             background: rgba(0, 0, 0, 0.85); border: 1px solid #ff0000; 
             border-radius: 15px; padding: 5px 10px; height: 50px;
         }
-        input[type="text"] { background: transparent; border: none; color: #ff0000; padding: 0 5px; font-size: 16px; outline: none; flex-grow: 1; font-family: inherit; }
-        button#sendBtn { background: #ff0000; color: #000; border: none; padding: 8px 15px; cursor: pointer; font-weight: bold; border-radius: 10px; height: 35px; }
-        .upload-btn { background: transparent; color: #ff0000; border: 1px solid #ff0000; width: 32px; height: 32px; font-size: 20px; cursor: pointer; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+        input[type="text"] { background: transparent; border: none; color: #ff0000; padding: 0 5px; font-size: 16px; outline: none; flex-grow: 1; min-width: 0; font-family: inherit; }
+        button#sendBtn { background: #ff0000; color: #000; border: none; padding: 8px 15px; cursor: pointer; font-weight: bold; border-radius: 10px; height: 35px; flex-shrink: 0; }
+        .upload-btn { background: transparent; color: #ff0000; border: 1px solid #ff0000; width: 32px; height: 32px; font-size: 20px; cursor: pointer; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 
-        #login-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-image: url('https://i.pinimg.com/736x/97/d1/98/97d198f2de3a40b28e8f9bb58c4ad1ca.jpg'); background-size: 450px; background-position: center; background-repeat: no-repeat; background-color: #000; display: flex; justify-content: center; align-items: center; z-index: 100; }
+        #login-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh; background-image: url('https://i.pinimg.com/736x/97/d1/98/97d198f2de3a40b28e8f9bb58c4ad1ca.jpg'); background-size: 450px; background-position: center; background-repeat: no-repeat; background-color: #000; display: flex; justify-content: center; align-items: center; z-index: 100; }
         #login-content { background-color: rgba(0, 0, 0, 0.4); padding: 30px; border-radius: 15px; border: 1px solid rgba(255, 0, 0, 0.5); display: flex; flex-direction: column; align-items: center; width: 90%; max-width: 350px; backdrop-filter: blur(20px); box-shadow: 0 0 30px rgba(0,0,0,0.5); }
         #login-screen input { width: 100%; text-align: center; margin-bottom: 20px; background: rgba(0, 0, 0, 0.6); border: 1px solid #ff0000; color: #ff0000; padding: 12px; border-radius: 5px; outline: none; }
         
@@ -155,6 +164,18 @@
     let selectedImageBase64 = null;
     let replyData = null;
 
+    // ✅ mobile eke address bar hide/show unama height adjust wenna
+    function fixMobileHeight() {
+        if (!CSS.supports('height', '100dvh')) {
+            const h = window.innerHeight + 'px';
+            document.getElementById('terminal').style.height = h;
+            document.getElementById('login-screen').style.height = h;
+        }
+    }
+    window.addEventListener('resize', fixMobileHeight);
+    window.addEventListener('orientationchange', () => setTimeout(fixMobileHeight, 300));
+    fixMobileHeight();
+
     document.getElementById('username').addEventListener('input', (e) => {
         document.getElementById('admin-pass-container').classList.toggle('hidden', !e.target.value.toUpperCase().startsWith("ADMIN_"));
     });
@@ -215,14 +236,13 @@
         
         let users = Object.keys(presenceState);
         
-        // අකාරාදී පිළිවෙලට සකසන අතරතුර Admin ව ලැයිස්තුවේ ඉහළට ගෙන ඒමේ Sorting ක්‍රියාවලිය
         users.sort((a, b) => {
             let isAdminA = (a === "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒" || a.toUpperCase() === "ADMIN_BIG MOUSE" || a.toUpperCase() === "ADMIN VENOM");
             let isAdminB = (b === "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒" || b.toUpperCase() === "ADMIN_BIG MOUSE" || b.toUpperCase() === "ADMIN VENOM");
             
-            if (isAdminA && !isAdminB) return -1; // Admin 'A' නම් ඉහළට යයි
-            if (!isAdminA && isAdminB) return 1;  // Admin 'B' නම් ඉහළට යයි
-            return a.localeCompare(b);            // අනිත් යූසර්ලා අකාරාදී පිළිවෙලට යයි
+            if (isAdminA && !isAdminB) return -1;
+            if (!isAdminA && isAdminB) return 1;
+            return a.localeCompare(b);
         });
 
         users.forEach(user => {
@@ -330,6 +350,9 @@
     }
     
     document.getElementById("userInput").addEventListener("keypress", (e) => { if (e.key === "Enter") sendMessage(); });
+    
+    // ✅ keyboard open unama messages scroll to bottom
+    document.getElementById("userInput").addEventListener("focus", () => setTimeout(scrollToBottom, 350));
 </script>
 </body>
 </html>
