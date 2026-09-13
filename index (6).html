@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>𝖛𝖎𝖌𝖎𝖑𝖆𝖓𝖙𝖊</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { box-sizing: border-box; }
+        html, body { background-color: #000; color: #ff4444; font-family: 'Courier New', monospace; margin: 0; padding: 0; overflow: hidden; height: 100%; width: 100vw; }
+
+        #terminal { 
+            width: 100vw; height: 100vh; height: 100dvh;
+            display: flex; flex-direction: column; 
+            background-image: url('https://i.pinimg.com/736x/97/d1/98/97d198f2de3a40b28e8f9bb58c4ad1ca.jpg');
+            background-size: cover; background-position: center; background-repeat: no-repeat; padding: 10px; 
+            position: relative;
+        }
+
+        #header-container { 
+            flex-shrink: 0;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 15px; 
+            background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px); border: 1px solid rgba(255, 0, 0, 0.2); border-radius: 8px;
+        }
+        .header-main { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+        .header-logo { width: 45px; height: 45px; object-fit: contain; }
+        #header { font-size: clamp(20px, 6vw, 35px); font-weight: bold; color: #ff0000; text-shadow: 0 0 15px #ff0000; flex-grow: 1; text-align: center; letter-spacing: 3px; }
+        #creator-tag { font-size: 10px; color: #ff0000; letter-spacing: 1px; margin-top: -5px; opacity: 0.8; font-weight: normal; }
+
+        #online-panel {
+            position: absolute; top: 80px; right: 10px; z-index: 10;
+            display: flex; align-items: flex-start; gap: 5px;
+        }
+        #members-list-container {
+            width: 150px; max-height: 200px; overflow-y: auto;
+            background: rgba(255, 0, 0, 0.1); backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 0, 0, 0.3); border-radius: 10px;
+            padding: 10px; display: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        #members-list-container h4 { margin: 0 0 8px 0; font-size: 12px; text-transform: uppercase; border-bottom: 1px solid rgba(255,0,0,0.3); padding-bottom: 3px; }
+        .member-item { font-size: 11px; margin-bottom: 4px; color: #fff; display: flex; align-items: center; gap: 5px; }
+        .online-dot { width: 6px; height: 6px; background: #0f0; border-radius: 50%; box-shadow: 0 0 5px #0f0; }
+
+        #toggle-members {
+            background: rgba(255, 0, 0, 0.2); border: 1px solid #ff0000; color: #ff0000;
+            cursor: pointer; padding: 5px; border-radius: 5px; font-weight: bold; font-size: 14px;
+        }
+
+        #messages { 
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto; 
+            background: rgba(0, 0, 0, 0.6); 
+            backdrop-filter: blur(10px); 
+            padding: 15px; 
+            margin: 10px 0; 
+            border: 1px solid rgba(255, 0, 0, 0.2); 
+            border-radius: 10px;
+            display: flex; 
+            flex-direction: column; 
+            justify-content: flex-start; 
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: #ff0000 transparent;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        #messages::-webkit-scrollbar { width: 6px; }
+        #messages::-webkit-scrollbar-thumb { background-color: #ff0000; border-radius: 10px; }
+
+        #msg-container {
+            display: flex; flex-direction: column;
+            width: 100%;
+        }
+
+        .msg { margin-bottom: 12px; padding: 8px 12px; font-size: 14px; word-wrap: break-word; border-radius: 0 5px 5px 0; border-left: 3px solid; background: rgba(0, 0, 0, 0.5); position: relative; }
+        .reply-btn { font-size: 10px; cursor: pointer; color: #888; margin-top: 5px; display: inline-block; text-decoration: underline; }
+        .quote-box { background: rgba(255, 255, 255, 0.1); border-left: 2px solid #555; padding: 5px 8px; margin-bottom: 5px; font-size: 12px; opacity: 0.8; font-style: italic; border-radius: 3px; }
+
+        #reply-preview { display: none; background: rgba(255, 0, 0, 0.2); padding: 5px 12px; font-size: 12px; border: 1px solid #ff0000; border-bottom: none; border-radius: 10px 10px 0 0; width: calc(100% - 20px); margin: 0 auto; justify-content: space-between; align-items: center; backdrop-filter: blur(10px); }
+        .cancel-reply { cursor: pointer; color: #fff; font-weight: bold; font-size: 16px; margin-left: 10px; }
+
+        .input-container { 
+            flex-shrink: 0;
+            padding: 5px; 
+            padding-bottom: calc(5px + env(safe-area-inset-bottom, 0px));
+        }
+        .controls { 
+            display: flex; align-items: center; gap: 10px; width: 100%; 
+            background: rgba(0, 0, 0, 0.85); border: 1px solid #ff0000; 
+            border-radius: 15px; padding: 5px 10px; height: 50px;
+        }
+        input[type="text"] { background: transparent; border: none; color: #ff0000; padding: 0 5px; font-size: 16px; outline: none; flex-grow: 1; min-width: 0; font-family: inherit; }
+        button#sendBtn { background: #ff0000; color: #000; border: none; padding: 8px 15px; cursor: pointer; font-weight: bold; border-radius: 10px; height: 35px; flex-shrink: 0; }
+        .upload-btn { background: transparent; color: #ff0000; border: 1px solid #ff0000; width: 32px; height: 32px; font-size: 20px; cursor: pointer; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+        #login-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh; background-image: url('https://i.pinimg.com/736x/97/d1/98/97d198f2de3a40b28e8f9bb58c4ad1ca.jpg'); background-size: 450px; background-position: center; background-repeat: no-repeat; background-color: #000; display: flex; justify-content: center; align-items: center; z-index: 100; }
+        #login-content { background-color: rgba(0, 0, 0, 0.4); padding: 30px; border-radius: 15px; border: 1px solid rgba(255, 0, 0, 0.5); display: flex; flex-direction: column; align-items: center; width: 90%; max-width: 350px; backdrop-filter: blur(20px); box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+        #login-screen input { width: 100%; text-align: center; margin-bottom: 20px; background: rgba(0, 0, 0, 0.6); border: 1px solid #ff0000; color: #ff0000; padding: 12px; border-radius: 5px; outline: none; }
+
+        .hidden { display: none !important; }
+        .chat-img { max-width: 100%; border-radius: 4px; margin-top: 8px; }
+        #preview-container { display: none; padding: 5px; font-size: 11px; color: #ff0; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div id="login-screen">
+    <div id="login-content">
+        <div style="font-size: 35px; color: #ff0000; text-shadow: 0 0 20px #ff0000; margin-bottom: 20px; font-weight: bold;">𝖛𝖎𝖌𝖎𝖑𝖆𝖓𝖙𝖊</div>
+        <input type="text" id="username" placeholder="Codename..." autocomplete="off">
+        <div id="admin-pass-container" class="hidden" style="width: 100%;">
+            <input type="password" id="adminPass" placeholder="Admin Access Key..." style="border-color: #ffd700; color: #ffd700;">
+        </div>
+        <button onclick="handleLogin()" style="background: #ff0000; color: #000; border: none; padding: 15px; cursor: pointer; font-weight: bold; width: 100%; border-radius: 5px;">AUTHENTICATE</button>
+    </div>
+</div>
+
+<div id="chat-box" class="hidden">
+    <div id="terminal">
+        <div id="header-container">
+            <div class="header-main">
+                <img src="https://i.pinimg.com/736x/97/d1/98/97d198f2de3a40b28e8f9bb58c4ad1ca.jpg" class="header-logo">
+                <div id="header">𝖛𝖎𝖌𝖎𝖑𝖆𝖓𝖙𝖊</div>
+                <img src="https://i.pinimg.com/736x/97/d1/98/97d198f2de3a40b28e8f9bb58c4ad1ca.jpg" class="header-logo">
+            </div>
+            <div id="creator-tag">𝖈𝖗𝖊𝖆𝖙𝖊𝖉 𝖇𝖞 𝖒𝖗 𝖛𝖊𝖓𝖔𝖒</div>
+        </div>
+
+        <div id="online-panel">
+            <div id="members-list-container">
+                <h4>Active Agents</h4>
+                <div id="members-list"></div>
+            </div>
+            <button id="toggle-members" onclick="toggleMembers()">◀</button>
+        </div>
+
+        <div id="messages">
+            <div id="msg-container"></div> 
+        </div>
+
+        <div class="input-container">
+            <div id="reply-preview">
+                <span id="reply-text" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
+                <span class="cancel-reply" onclick="cancelReply()">✕</span>
+            </div>
+            <div id="preview-container">DATA READY TO TRANSMIT 📎</div>
+            <div class="controls">
+                <input type="file" id="imageInput" class="hidden" onchange="showPreview()">
+                <button class="upload-btn" onclick="document.getElementById('imageInput').click()">+</button>
+                <input type="text" id="userInput" placeholder="Type message..." autocomplete="off">
+                <button id="sendBtn" onclick="sendMessage()">SEND</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL = "https://ydzqkunyqbhjkcippqgx.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlkenFrdW55cWJoamtjaXBwcWd4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2MjY1NzgsImV4cCI6MjA5MDIwMjU3OH0.soSmFcFnkq4LZZuDDZe5vVaOLzUghz9QYRHQSh3fVS0";
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let currentUser = "";
+    let selectedImageBase64 = null;
+    let replyData = null;
+
+    // ===== NOTIFICATION STATE =====
+    let lastMsgId = 0;
+    let notifPermission = false;
+
+    function fixMobileHeight() {
+        if (!CSS.supports('height', '100dvh')) {
+            const h = window.innerHeight + 'px';
+            document.getElementById('terminal').style.height = h;
+            document.getElementById('login-screen').style.height = h;
+        }
+    }
+    window.addEventListener('resize', fixMobileHeight);
+    window.addEventListener('orientationchange', () => setTimeout(fixMobileHeight, 300));
+    fixMobileHeight();
+
+    document.getElementById('username').addEventListener('input', (e) => {
+        document.getElementById('admin-pass-container').classList.toggle('hidden', !e.target.value.toUpperCase().startsWith("ADMIN_"));
+    });
+
+    async function handleLogin() {
+        const name = document.getElementById('username').value.trim();
+        const pass = document.getElementById('adminPass').value;
+        if (!name) return;
+
+        const upperName = name.toUpperCase();
+
+        if (upperName === "ADMIN_BIG MOUSE") {
+            if (pass === "induwara2010") {
+                currentUser = "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒"; 
+            } else {
+                alert("ACCESS DENIED");
+                return;
+            }
+        } else {
+            currentUser = name;
+        }
+
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('chat-box').classList.remove('hidden');
+        initChat();
+    }
+
+    function toggleMembers() {
+        const list = document.getElementById('members-list-container');
+        const btn = document.getElementById('toggle-members');
+        if (list.style.display === "none" || list.style.display === "") {
+            list.style.display = "block";
+            btn.innerText = "▶";
+        } else {
+            list.style.display = "none";
+            btn.innerText = "◀";
+        }
+    }
+
+    async function initChat() {
+        await fetchMessages();
+        requestNotifPermission();
+
+        const channel = _supabase.channel('online-users', { config: { presence: { key: currentUser } } });
+        channel.on('presence', { event: 'sync' }, () => { updateMembersList(channel.presenceState()); }).subscribe(async (status) => { if (status === 'SUBSCRIBED') await channel.track({ online_at: new Date().toISOString() }); });
+
+        _supabase.channel('messages_channel').on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => {
+            if (payload.eventType === 'INSERT') {
+                appendMessage(payload.new.id, payload.new.username, payload.new.msg, payload.new.image_data);
+                scrollToBottom();
+                // notification yawanna - aye aye message ekak nam witharak
+                if (payload.new.username !== currentUser && payload.new.id > lastMsgId) {
+                    lastMsgId = payload.new.id;
+                    showNotification(payload.new.username);
+                }
+            }
+            if (payload.eventType === 'DELETE') document.getElementById(`msg-${payload.old.id}`)?.remove();
+        }).subscribe();
+    }
+
+    // ===== NOTIFICATION FUNCTIONS =====
+    function requestNotifPermission() {
+        if (!("Notification" in window)) return;
+        if (Notification.permission === "granted") {
+            notifPermission = true;
+        } else if (Notification.permission !== "denied") {
+            Notification.requestPermission().then(p => {
+                notifPermission = (p === "granted");
+            });
+        }
+    }
+
+    function showNotification(fromUser) {
+        // app eka screen eke thiyeddhath notification yawanna
+        if (notifPermission) {
+            try {
+                const n = new Notification("𝖛𝖎𝖌𝖎𝖑𝖆𝖓𝖙𝖊", {
+                    body: "𝔪𝔢𝔰𝔰𝔞𝔤𝔢 𝔯𝔢𝔠𝔢𝔦𝔳𝔢𝔡",
+                    icon: "https://i.pinimg.com/736x/97/d1/98/97d198f2de3a40b28e8f9bb58c4ad1ca.jpg",
+                    badge: "https://i.pinimg.com/736x/97/d1/98/97d198f2de3a40b28e8f9bb58c4ad1ca.jpg",
+                    tag: "vigilante-msg",
+                    renotify: true,
+                    silent: false
+                });
+                n.onclick = () => {
+                    window.focus();
+                    scrollToBottom();
+                };
+            } catch(e) {}
+        }
+        // app eka background eke nam - median.co push wakeup
+        if (document.hidden && window.Android && Android.showNotification) {
+            try { Android.showNotification("𝖛𝖎𝖌𝖎𝖑𝖆𝖓𝖙𝖊", "𝔪𝔢𝔰𝔰𝔞𝔤𝔢 𝔯𝔢𝔠𝔢𝔦𝔳𝔢𝔡"); } catch(e) {}
+        }
+    }
+
+    function updateMembersList(presenceState) {
+        const listDiv = document.getElementById('members-list');
+        listDiv.innerHTML = "";
+
+        let users = Object.keys(presenceState);
+
+        users.sort((a, b) => {
+            let isAdminA = (a === "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒" || a.toUpperCase() === "ADMIN_BIG MOUSE" || a.toUpperCase() === "ADMIN VENOM");
+            let isAdminB = (b === "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒" || b.toUpperCase() === "ADMIN_BIG MOUSE" || b.toUpperCase() === "ADMIN VENOM");
+
+            if (isAdminA && !isAdminB) return -1;
+            if (!isAdminA && isAdminB) return 1;
+            return a.localeCompare(b);
+        });
+
+        users.forEach(user => {
+            const div = document.createElement('div');
+            div.className = "member-item";
+
+            let isAdmin = (user === "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒" || user.toUpperCase() === "ADMIN_BIG MOUSE" || user.toUpperCase() === "ADMIN VENOM");
+            let displayUser = isAdmin ? "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒" : user;
+            let dotColor = isAdmin ? "#ffd700" : "#0f0";
+            let nameColor = isAdmin ? "#ffd700" : "#fff";
+
+            div.innerHTML = `<span class="online-dot" style="background:${dotColor}; box-shadow: 0 0 5px ${dotColor};"></span> <span style="color:${nameColor}">${displayUser}</span>`;
+            listDiv.appendChild(div);
+        });
+    }
+
+    function scrollToBottom() {
+        const msgDiv = document.getElementById('messages');
+        msgDiv.scrollTop = msgDiv.scrollHeight;
+    }
+
+    async function fetchMessages() {
+        const { data } = await _supabase.from('messages').select('*').order('id', { ascending: true });
+        document.getElementById('msg-container').innerHTML = '';
+        if (data) {
+            data.forEach(m => appendMessage(m.id, m.username, m.msg, m.image_data));
+            if (data.length) lastMsgId = data[data.length - 1].id;
+            scrollToBottom();
+        }
+    }
+
+    function showPreview() {
+        const file = document.getElementById('imageInput').files[0];
+        const reader = new FileReader();
+        reader.onloadend = () => { selectedImageBase64 = reader.result; document.getElementById('preview-container').style.display = 'block'; };
+        if (file) reader.readAsDataURL(file);
+    }
+
+    function setReply(user, msg) {
+        let isAdmin = (user === "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒" || user.toUpperCase() === "ADMIN_BIG MOUSE" || user.toUpperCase() === "ADMIN VENOM");
+        let displayUser = isAdmin ? "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒" : user;
+
+        const shortMsg = msg.length > 25 ? msg.substring(0, 25) + "..." : msg;
+        replyData = { user: displayUser, msg: shortMsg };
+        document.getElementById('reply-text').innerText = `Replying to @${displayUser}: ${shortMsg}`;
+        document.getElementById('reply-preview').style.display = 'flex';
+        document.getElementById('userInput').focus();
+    }
+
+    function cancelReply() { replyData = null; document.getElementById('reply-preview').style.display = 'none'; }
+
+    async function sendMessage() {
+        const input = document.getElementById('userInput');
+        let text = input.value.trim();
+        if (!text && !selectedImageBase64) return;
+        let finalMsg = text;
+        if (replyData) finalMsg = `>>REPLY[${replyData.user}:${replyData.msg}]<< ${text}`;
+        await _supabase.from('messages').insert([{ username: currentUser, msg: finalMsg, image_data: selectedImageBase64 }]);
+        input.value = ""; 
+        selectedImageBase64 = null;
+        cancelReply();
+        document.getElementById('preview-container').style.display = 'none';
+    }
+
+    function appendMessage(id, user, rawMsg, imgData) {
+        if (document.getElementById(`msg-${id}`)) return;
+        const msgContainer = document.getElementById('msg-container');
+        const div = document.createElement('div');
+        div.id = `msg-${id}`;
+        div.className = "msg";
+
+        let isAdmin = (user === "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒" || user.toUpperCase() === "ADMIN_BIG MOUSE" || user.toUpperCase() === "ADMIN VENOM");
+        let displayUser = isAdmin ? "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒" : user;
+        let displayColor = isAdmin ? "#ffd700" : "#ff4444";
+
+        div.style.borderColor = displayColor;
+        div.style.color = displayColor;
+
+        let cleanMsg = rawMsg;
+        let replyHtml = "";
+
+        if (rawMsg.startsWith(">>REPLY[")) {
+            const endIdx = rawMsg.indexOf("]<<");
+            if (endIdx > -1) {
+                const parts = rawMsg.substring(8, endIdx).split(":");
+                replyHtml = `<div class="quote-box" style="border-color: ${displayColor}; color: #fff;">@${parts[0]}: ${parts[1]}</div>`;
+                cleanMsg = rawMsg.substring(endIdx + 4);
+            }
+        }
+
+        div.innerHTML = `
+            ${replyHtml}
+            <div onclick="handleDelete(${id}, '${user}')">
+                <span style="font-weight:bold;">[${displayUser}]</span> ${cleanMsg}
+            </div>
+            ${imgData ? `<img src="${imgData}" class="chat-img">` : ''}
+            <div class="reply-btn" style="color:${displayColor}" onclick="setReply('${displayUser}', '${cleanMsg.replace(/'/g, "\\'")}')">[REPLY]</div>
+        `;
+        msgContainer.appendChild(div);
+    }
+
+    function handleDelete(id, user) {
+        if (currentUser === "𝖒𝖗 𝖛𝖊𝖓𝖔𝖒" || user === currentUser) { 
+            if(confirm("Destroy this intel?")) _supabase.from('messages').delete().eq('id', id); 
+        }
+    }
+
+    document.getElementById("userInput").addEventListener("keypress", (e) => { if (e.key === "Enter") sendMessage(); });
+    document.getElementById("userInput").addEventListener("focus", () => setTimeout(scrollToBottom, 350));
+</script>
+</body>
+</html>
